@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {MODELS,checkModel,validateCorrection,validateConstraints,validateSession,exportPayload} from '../src/engine.js';
+const c={ram:16,os:'Windows',price:18000};
+test('T01 known RAM mismatch incompatible',()=>assert.equal(checkModel(MODELS[2],c).status,'INCOMPATIBLE'));
+test('T02 unsupported OS incompatible',()=>assert.equal(checkModel(MODELS[0],{...c,os:'macOS'}).status,'INCOMPATIBLE'));
+test('T03 missing RAM yields unresolved, never verified',()=>assert.equal(checkModel(MODELS[1],c).status,'UNRESOLVED'));
+test('T04 supported declared constraints compatible',()=>assert.equal(checkModel(MODELS[0],c).status,'COMPATIBLE'));
+test('T05 buyer budget stays fixed; price ceiling mismatch',()=>assert.equal(checkModel(MODELS[0],{...c,price:14000}).status,'INCOMPATIBLE'));
+test('T06 correction changes status and increments version',()=>{const fixed=validateCorrection(MODELS[1],{ram:'16',price:'16900',os:'Windows,Linux',source:'Synthetic corrected sheet 02',reason:'Simulated verified update'});assert.equal(fixed.version,2);assert.equal(checkModel(fixed,c).status,'COMPATIBLE');});
+test('T07 input and correction validation',()=>{assert.throws(()=>validateConstraints({...c,ram:500}));assert.throws(()=>validateConstraints({...c,os:'Nonsense'}));assert.throws(()=>validateCorrection(MODELS[0],{ram:'20',price:'42',os:'Windows',source:'short',reason:'short'}));assert.throws(()=>validateSession({label:'ok',method:'manual',minutes:-1,errors:0,support:0}));});
+test('T09 export includes fiction disclosure and audit fields',()=>{const v=exportPayload(MODELS,[],[]);assert.match(v.disclosure,/FICTIONAL/);assert.equal(v.rows.length,4);});
+test('Unresolved when no contradictions but absent OS and price',()=>assert.equal(checkModel(MODELS[3],c).status,'UNRESOLVED'));
+test('Known mismatch dominates missing evidence but missing field remains visible',()=>{const v=checkModel({...MODELS[2],price:null},c);assert.equal(v.status,'INCOMPATIBLE');assert.equal(v.unknown.length,1);});
