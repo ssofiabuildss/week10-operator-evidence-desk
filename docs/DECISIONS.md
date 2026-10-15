@@ -17,3 +17,12 @@ Run tests locally, then upload the repo to GitHub, deploy to Vercel, perform mec
 - Deploy 2: PENDING
 - Mechanical bug and correction: PENDING
 - Persona confusion and minimal fix: PENDING
+
+## Mechanical Test — 2026-10-15
+
+- **Observed issue:** After a successful evidence correction, the success message remained visible when a subsequent submission was rejected because the correction reason was empty.
+- **Why it matters:** A stale success message could mislead an operator into believing an invalid correction had been saved.
+- **Minimal fix:** Clear the previous correction message on form input, change, and invalid events.
+- **Verification:** Reproduced the original issue, applied the fix, and repeated the browser test. The invalid submission now displays the required-field warning without the previous success message.
+- **Regression tests:** 10/10 automated tests passed after the code change.
+- **Scope:** No changes to compatibility rules, evidence versioning, or stored records.
